@@ -1,0 +1,161 @@
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QMainWindow, QApplication
+from pymongo import MongoClient
+import sys
+
+class Ui_MainWindow(object):
+    def setupUi(self, MainWindow):
+        MainWindow.setObjectName("MainWindow")
+        MainWindow.resize(802, 625)
+        self.centralwidget = QtWidgets.QWidget(MainWindow)
+        self.centralwidget.setObjectName("centralwidget")
+        self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.centralwidget)
+        self.verticalLayout_4.setObjectName("verticalLayout_4")
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.productLabel = QtWidgets.QLabel(self.centralwidget)
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        self.productLabel.setFont(font)
+        self.productLabel.setObjectName("productLabel")
+        self.verticalLayout.addWidget(self.productLabel)
+        self.priceLabel = QtWidgets.QLabel(self.centralwidget)
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        self.priceLabel.setFont(font)
+        self.priceLabel.setObjectName("priceLabel")
+        self.verticalLayout.addWidget(self.priceLabel)
+        self.horizontalLayout.addLayout(self.verticalLayout)
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.productLineEdit = QtWidgets.QLineEdit(self.centralwidget)
+        self.productLineEdit.setObjectName("productLineEdit")
+        self.verticalLayout_2.addWidget(self.productLineEdit)
+        self.priceLineEdit = QtWidgets.QLineEdit(self.centralwidget)
+        self.priceLineEdit.setObjectName("priceLineEdit")
+        self.verticalLayout_2.addWidget(self.priceLineEdit)
+        self.horizontalLayout.addLayout(self.verticalLayout_2)
+        self.verticalLayout_3.addLayout(self.horizontalLayout)
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.changePricePushButton = QtWidgets.QPushButton(self.centralwidget)
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        self.changePricePushButton.setFont(font)
+        self.changePricePushButton.setObjectName("changePricePushButton")
+        self.horizontalLayout_2.addWidget(self.changePricePushButton)
+        self.decreasePricePushButton = QtWidgets.QPushButton(self.centralwidget)
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        self.decreasePricePushButton.setFont(font)
+        self.decreasePricePushButton.setObjectName("decreasePricePushButton")
+        self.horizontalLayout_2.addWidget(self.decreasePricePushButton)
+        self.verticalLayout_3.addLayout(self.horizontalLayout_2)
+        self.verticalLayout_4.addLayout(self.verticalLayout_3)
+        self.dataLabel = QtWidgets.QLabel(self.centralwidget)
+        font = QtGui.QFont()
+        font.setPointSize(20)
+        self.dataLabel.setFont(font)
+        self.dataLabel.setObjectName("dataLabel")
+        self.verticalLayout_4.addWidget(self.dataLabel)
+        MainWindow.setCentralWidget(self.centralwidget)
+        self.menubar = QtWidgets.QMenuBar(MainWindow)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 802, 26))
+        self.menubar.setObjectName("menubar")
+        MainWindow.setMenuBar(self.menubar)
+        self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        self.statusbar.setObjectName("statusbar")
+        MainWindow.setStatusBar(self.statusbar)
+
+        self.retranslateUi(MainWindow)
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+    def retranslateUi(self, MainWindow):
+        _translate = QtCore.QCoreApplication.translate
+        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self.productLabel.setText(_translate("MainWindow", "Product"))
+        self.priceLabel.setText(_translate("MainWindow", "Price"))
+        self.changePricePushButton.setText(_translate("MainWindow", "Change the price"))
+        self.decreasePricePushButton.setText(_translate("MainWindow", "Decrease the price"))
+        self.dataLabel.setText(_translate("MainWindow", "Data"))
+
+
+
+class MainApp(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+
+        # Подключение к MongoDB
+        self.client = MongoClient("mongodb://localhost:27017/")
+        self.db = self.client["products_db"]
+        self.collection = self.db["products"]
+
+        # Первичная инициализация (один раз — не обязательно повторять каждый запуск)
+        # self.init_db()
+
+        # Подключение кнопок
+        self.ui.changePricePushButton.clicked.connect(self.change_price)
+        self.ui.decreasePricePushButton.clicked.connect(self.decrease_price)
+
+        self.display_data()
+
+    def init_db(self):
+        default_data = {
+            "soda": 5.2,
+            "wine": 5.6,
+            "burger": 1.99,
+            "tea": 2.5,
+            "milk": 2.4,
+            "chicken": 4.1
+        }
+        for key, value in default_data.items():
+            self.collection.update_one({"product": key}, {"$set": {"price": value}}, upsert=True)
+
+    def display_data(self):
+        all_data = self.collection.find()
+        display_dict = {doc['product']: round(doc['price'], 2) for doc in all_data}
+        self.ui.dataLabel.setText(str(display_dict))
+
+    def change_price(self):
+        product = self.ui.productLineEdit.text().strip()
+        price_text = self.ui.priceLineEdit.text().strip()
+        if not product or not price_text:
+            self.ui.dataLabel.setText("❌ Enter both product and price")
+            return
+
+        try:
+            price = round(float(price_text), 2)
+        except ValueError:
+            self.ui.dataLabel.setText("❌ Price must be a number")
+            return
+
+        self.collection.update_one({"product": product}, {"$set": {"price": price}}, upsert=True)
+        self.display_data()
+
+    def decrease_price(self):
+        product = self.ui.productLineEdit.text().strip()
+        if not product:
+            self.ui.dataLabel.setText("❌ Enter product name")
+            return
+
+        item = self.collection.find_one({"product": product})
+        if item:
+            new_price = round(max(0, item["price"] - 2), 2)
+            self.collection.update_one({"product": product}, {"$set": {"price": new_price}})
+            self.display_data()
+        else:
+            self.ui.dataLabel.setText(f"❌ Product '{product}' not found")
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = MainApp()
+    window.show()
+    sys.exit(app.exec_())

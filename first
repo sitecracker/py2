@@ -1,0 +1,29 @@
+import sqlite3
+
+shopping_card = [["apple", 5], ["banana", 4], ["orange", 1], ["sweets", 2], ["chocolate", 2], ["tomatoes", 5]]
+# shopping_card = [("apple", 5), ("banana", 4), ("orange", 1), ("sweets", 2), ("chocolate", 2), ("tomatoes", 5)] 
+
+reversed_card = []
+
+for i in range(len(shopping_card)-1, -1, -1):
+    reversed_card.append(shopping_card[i])
+
+print(reversed_card)
+
+
+conn = sqlite3.connect('shopping.db')
+cursor = conn.cursor()
+
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS Shopping (
+        Fruit TEXT,
+        Number INTEGER
+    )
+''')
+
+for item in reversed_card:
+    fruit = item[0]
+    number = item[1]
+    cursor.execute("INSERT INTO Shopping (Fruit, Number) VALUES (?, ?)", (fruit, number))
+
+print("Data aded successfully")

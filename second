@@ -1,0 +1,52 @@
+from pymongo import MongoClient
+
+menu = {
+    "sprite": 1.70,
+    "fries": 2.99,
+    "burger": 1.99,
+    "shake": 3.5,
+    "cookie": 2.4,
+    "beef": 3.9
+}
+
+client = MongoClient("mongodb://localhost:27017/")
+db = client["restaurant"]
+collection = db["menu"]
+
+
+collection.delete_many({})
+collection.insert_many([{"name": k, "price": v} for k, v in menu.items()])
+print("\nData added successfully")
+
+
+def make_order(menu_dict):
+    order = []
+    total_price = 0
+
+    while True:
+        print("\n----MENU----")
+        for item in menu_dict:
+            print(f"- {item}")
+
+        item_name = input("What do you want? - ").strip().lower()
+
+        if item_name not in menu_dict:
+            print("\nNot Available")
+            continue
+
+        quantity = int(input("How much do you want? - "))
+        total_price += menu_dict[item_name] * quantity
+
+
+        order.append([item_name, quantity])
+
+        more = input("Maybe you want something more? (Yes/No) - ").strip().lower()
+        if more != "yes":
+            break
+
+    return order, total_price
+
+
+user_order = make_order(menu)
+print("\nYour order and total price: ")
+print(user_order)

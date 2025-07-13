@@ -1,0 +1,40 @@
+#1
+import numpy as np
+
+original_array = np.arange(0, 101)
+
+square_array = original_array ** 2
+
+cube_array = original_array ** 3
+
+print(original_array)
+print(square_array)
+print(cube_array)
+
+# 2
+
+arr1 = np.random.randint(0, 101, size=50)
+arr2 = np.random.randint(0, 101, size=50)
+
+combined = np.concatenate((arr1, arr2))
+
+div_by_2 = combined[combined % 2 == 0]
+
+div_by_5 = combined[combined % 5 == 0]
+
+print("პირველი მასივი:", arr1)
+print("მეორე მასივი:", arr2)
+print("ორით გასაყოფი:", div_by_2)
+print("ხუთით გასაყოფი:", div_by_5)
+
+
+# 3
+
+a = np.arange(4,14)
+c = a.reshape(2,5)
+a.resize(2,5)
+print(a)
+print(c)
+
+
+
